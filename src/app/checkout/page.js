@@ -28,8 +28,8 @@ export default function Checkout() {
   const router = useRouter();
   const params = useSearchParams();
 
-  const publishableKey =
-    "pk_test_51NMv6ZSC6E6fnyMeRIEb9oEXdGRCC9yrBTT4xWHgcjWOuFcqFiAHErvaS50K1hl5t5WJXVGfLLWxvb705IWJhA3300yCcrMnlM";
+ 
+  const publishableKey ="pk_test_51S642WREiQNvH7aq3i0xWMWbHSExyeNgllx571JDFqQDX3QWQ9sJSQKN6AO7zwWJLrgI15Aja0DGJUFtthc5VFtV00toGxauOA";
   const stripePromise = loadStripe(publishableKey);
 
   console.log(cartItems);

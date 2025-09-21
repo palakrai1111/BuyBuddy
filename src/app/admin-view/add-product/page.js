@@ -7,55 +7,10 @@ import ComponentLevelLoader from "@/components/Loader/componentlevel";
 import Notification from "@/components/Notification";
 import { GlobalContext } from "@/context";
 import { addNewProduct, updateAProduct } from "@/services/product";
-import {
-  AvailableSizes,
-  adminAddProductformControls,
-  firebaseConfig,
-  firebaseStroageURL,
-} from "@/utils";
-import { initializeApp } from "firebase/app";
-import {
-  getDownloadURL,
-  getStorage,
-  ref,
-  uploadBytesResumable,
-} from "firebase/storage";
+import { AvailableSizes, adminAddProductformControls } from "@/utils";
 import { useRouter } from "next/navigation";
 import { useContext, useEffect, useState } from "react";
 import { toast } from "react-toastify";
-import { resolve } from "styled-jsx/css";
-
-const app = initializeApp(firebaseConfig);
-const storage = getStorage(app, firebaseStroageURL);
-
-const createUniqueFileName = (getFile) => {
-  const timeStamp = Date.now();
-  const randomStringValue = Math.random().toString(36).substring(2, 12);
-
-  return `${getFile.name}-${timeStamp}-${randomStringValue}`;
-};
-
-async function helperForUPloadingImageToFirebase(file) {
-  const getFileName = createUniqueFileName(file);
-  const storageReference = ref(storage, `ecommerce/${getFileName}`);
-  const uploadImage = uploadBytesResumable(storageReference, file);
-
-  return new Promise((resolve, reject) => {
-    uploadImage.on(
-      "state_changed",
-      (snapshot) => {},
-      (error) => {
-        console.log(error);
-        reject(error);
-      },
-      () => {
-        getDownloadURL(uploadImage.snapshot.ref)
-          .then((downloadUrl) => resolve(downloadUrl))
-          .catch((error) => reject(error));
-      }
-    );
-  });
-}
 
 const initialFormData = {
   name: "",
@@ -79,27 +34,52 @@ export default function AdminAddNewProduct() {
     setCurrentUpdatedProduct,
   } = useContext(GlobalContext);
 
-  console.log(currentUpdatedProduct);
-
   const router = useRouter();
 
   useEffect(() => {
     if (currentUpdatedProduct !== null) setFormData(currentUpdatedProduct);
   }, [currentUpdatedProduct]);
 
+  // --- Cloudinary Image Upload ---
   async function handleImage(event) {
-    const extractImageUrl = await helperForUPloadingImageToFirebase(
-      event.target.files[0]
-    );
+    const file = event.target.files[0];
+    if (!file) return;
 
-    if (extractImageUrl !== "") {
-      setFormData({
-        ...formData,
-        imageUrl: extractImageUrl,
+    const data = new FormData();
+    data.append("file", file);
+    data.append("upload_preset", "BuyBuddy_unsigned"); // Replace with your Cloudinary preset
+
+    try {
+      const res = await fetch(
+        "https://api.cloudinary.com/v1_1/dhknkwzwb/image/upload",
+        {
+          method: "POST",
+          body: data,
+        }
+      );
+
+      const result = await res.json();
+
+      if (result.secure_url) {
+        setFormData({
+          ...formData,
+          imageUrl: result.secure_url,
+        });
+        toast.success("Image uploaded successfully!", {
+          position: toast.POSITION.TOP_RIGHT,
+        });
+      } else {
+        throw new Error("Image upload failed");
+      }
+    } catch (error) {
+      console.error("Cloudinary upload error:", error);
+      toast.error("Failed to upload image", {
+        position: toast.POSITION.TOP_RIGHT,
       });
     }
   }
 
+  // --- Tile Click Handler ---
   function handleTileClick(getCurrentItem) {
     let cpySizes = [...formData.sizes];
     const index = cpySizes.findIndex((item) => item.id === getCurrentItem.id);
@@ -116,48 +96,44 @@ export default function AdminAddNewProduct() {
     });
   }
 
+  // --- Add or Update Product ---
   async function handleAddProduct() {
     setComponentLevelLoader({ loading: true, id: "" });
+
     const res =
       currentUpdatedProduct !== null
         ? await updateAProduct(formData)
         : await addNewProduct(formData);
 
-    console.log(res);
-
     if (res.success) {
       setComponentLevelLoader({ loading: false, id: "" });
-      toast.success(res.message, {
-        position: toast.POSITION.TOP_RIGHT,
-      });
+      toast.success(res.message, { position: toast.POSITION.TOP_RIGHT });
 
       setFormData(initialFormData);
-      setCurrentUpdatedProduct(null)
+      setCurrentUpdatedProduct(null);
+
       setTimeout(() => {
         router.push("/admin-view/all-products");
       }, 1000);
     } else {
-      toast.error(res.message, {
-        position: toast.POSITION.TOP_RIGHT,
-      });
+      toast.error(res.message, { position: toast.POSITION.TOP_RIGHT });
       setComponentLevelLoader({ loading: false, id: "" });
       setFormData(initialFormData);
     }
   }
 
-  console.log(formData);
-
   return (
-    <div className="w-full mt-5 mr-0 mb-0 ml-0 relative">
+    <div className="w-full mt-5 relative">
       <div className="flex flex-col items-start justify-start p-10 bg-white shadow-2xl rounded-xl relative">
-        <div className="w-full mt-6 mr-0 mb-0 ml-0 space-y-8">
+        <div className="w-full mt-6 space-y-8">
+          {/* Image Upload */}
           <input
             accept="image/*"
-            max="1000000"
             type="file"
             onChange={handleImage}
           />
 
+          {/* Available Sizes */}
           <div className="flex gap-2 flex-col">
             <label>Available sizes</label>
             <TileComponent
@@ -166,45 +142,51 @@ export default function AdminAddNewProduct() {
               data={AvailableSizes}
             />
           </div>
+
+          {/* Other Form Controls */}
           {adminAddProductformControls.map((controlItem) =>
             controlItem.componentType === "input" ? (
               <InputComponent
+                key={controlItem.id}
                 type={controlItem.type}
                 placeholder={controlItem.placeholder}
                 label={controlItem.label}
                 value={formData[controlItem.id]}
-                onChange={(event) => {
+                onChange={(event) =>
                   setFormData({
                     ...formData,
                     [controlItem.id]: event.target.value,
-                  });
-                }}
+                  })
+                }
               />
             ) : controlItem.componentType === "select" ? (
               <SelectComponent
+                key={controlItem.id}
                 label={controlItem.label}
                 options={controlItem.options}
                 value={formData[controlItem.id]}
-                onChange={(event) => {
+                onChange={(event) =>
                   setFormData({
                     ...formData,
                     [controlItem.id]: event.target.value,
-                  });
-                }}
+                  })
+                }
               />
             ) : null
           )}
+
+          {/* Add / Update Button */}
           <button
             onClick={handleAddProduct}
             className="inline-flex w-full items-center justify-center bg-black px-6 py-4 text-lg text-white font-medium uppercase tracking-wide"
           >
-            {componentLevelLoader && componentLevelLoader.loading ? (
+            {componentLevelLoader?.loading ? (
               <ComponentLevelLoader
-                text={currentUpdatedProduct !== null ? 'Updating Product' : "Adding Product"}
-                color={"#ffffff"}
-                loading={componentLevelLoader && componentLevelLoader.loading}
+                text={currentUpdatedProduct ? "Updating Product" : "Adding Product"}
+                color="#ffffff"
+                loading={componentLevelLoader.loading}
               />
-            ) : currentUpdatedProduct !== null ? (
+            ) : currentUpdatedProduct ? (
               "Update Product"
             ) : (
               "Add Product"
