@@ -47,11 +47,14 @@ export default function AdminAddNewProduct() {
 
     const data = new FormData();
     data.append("file", file);
-    data.append("upload_preset", "BuyBuddy_unsigned"); // Replace with your Cloudinary preset
+    data.append(
+      "upload_preset",
+      process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET
+    );
 
     try {
       const res = await fetch(
-        "https://api.cloudinary.com/v1_1/dhknkwzwb/image/upload",
+        `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`,
         {
           method: "POST",
           body: data,

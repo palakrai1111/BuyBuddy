@@ -4,8 +4,11 @@ const configOptions = {
   useUnifiedTopology: true,
 };
 const connectToDB = async () => {
-  const connectionUrl =
-    "mongodb+srv://rishikarana024:Rishika24680@cluster0.twyjy4j.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+   const connectionUrl = process.env.MONGODB_URI;
+   if (!connectionUrl) {
+    console.error("❌ MONGODB_URI is not defined in your environment variables.");
+    process.exit(1);
+  }
   mongoose
     .connect(connectionUrl, configOptions)
     .then(() => console.log("Ecommerce database connected successfully!"))
