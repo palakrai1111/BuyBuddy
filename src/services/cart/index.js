@@ -21,20 +21,23 @@ export const addToCart = async (formData) => {
 
 export const getAllCartItems = async (id) => {
   try {
-    const res = await fetch(`http://localhost:3000/api/cart/all-cart-items?id=${id}`, {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${Cookies.get("token")}`,
-      },
-    });
+    const res = await fetch(
+      `/api/cart/all-cart-items?id=${id}`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${Cookies.get("token")}`,
+        },
+        cache: "no-store",
+      }
+    );
 
-    const data = await res.json();
-
-    return data;
+    return await res.json();
   } catch (e) {
-    console.log(e);
+    console.log("getAllCartItems error:", e);
   }
 };
+
 
 export const deleteFromCart = async (id) => {
   try {
