@@ -2,109 +2,64 @@
 
 import Cookies from "js-cookie";
 
+const BASE_URL =
+  typeof window === "undefined"
+    ? process.env.NEXT_PUBLIC_BASE_URL
+    : "";
+
 export const addNewProduct = async (formData) => {
-  try {
-    const response = await fetch("/api/admin/add-product", {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        Authorization: `Bearer ${Cookies.get("token")}`,
-      },
-      body: JSON.stringify(formData),
-    });
-
-    const data = await response.json();
-
-    return data;
-  } catch (error) {
-    console.log(error);
-  }
+  const res = await fetch("/api/admin/add-product", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      Authorization: `Bearer ${Cookies.get("token")}`,
+    },
+    body: JSON.stringify(formData),
+  });
+  return res.json();
 };
 
 export const getAllAdminProducts = async () => {
-  try {
-    const res = await fetch("http://localhost:3000/api/admin/all-products", {
-      method: "GET",
-      cache: "no-store",
-    });
-
-    const data = await res.json();
-
-    return data;
-  } catch (error) {
-    console.log(error);
-  }
-};
-
-export const updateAProduct = async (formData) => {
-  try {
-    const res = await fetch("/api/admin/update-product", {
-      method: "PUT",
-      headers: {
-        "content-type": "application/json",
-        Authorization: `Bearer ${Cookies.get("token")}`,
-      },
-      cache: "no-store",
-      body: JSON.stringify(formData),
-    });
-
-    const data = await res.json();
-
-    return data;
-  } catch (e) {
-    console.log(e);
-  }
-};
-
-export const deleteAProduct = async (id) => {
-  try {
-    const res = await fetch(`/api/admin/delete-product?id=${id}`, {
-      method: "DELETE",
-      headers: {
-        Authorization: `Bearer ${Cookies.get("token")}`,
-      },
-    });
-
-    const data = await res.json();
-
-    return data;
-  } catch (e) {
-    console.log(e);
-  }
+  const res = await fetch(`${BASE_URL}/api/admin/all-products`, {
+    cache: "no-store",
+  });
+  return res.json();
 };
 
 export const productByCategory = async (id) => {
-  try {
-    const res = await fetch(
-      `http://localhost:3000/api/admin/product-by-category?id=${id}`,
-      {
-        method: "GET",
-        cache: "no-store",
-      }
-    );
-
-    const data = await res.json();
-
-    return data;
-  } catch (e) {
-    console.log(e);
-  }
+  const res = await fetch(
+    `${BASE_URL}/api/admin/product-by-category?id=${id}`,
+    { cache: "no-store" }
+  );
+  return res.json();
 };
 
 export const productById = async (id) => {
-  try {
-    const res = await fetch(
-      `http://localhost:3000/api/admin/product-by-id?id=${id}`,
-      {
-        method: "GET",
-        cache: "no-store",
-      }
-    );
+  const res = await fetch(
+    `${BASE_URL}/api/admin/product-by-id?id=${id}`,
+    { cache: "no-store" }
+  );
+  return res.json();
+};
 
-    const data = await res.json();
+export const updateAProduct = async (formData) => {
+  const res = await fetch("/api/admin/update-product", {
+    method: "PUT",
+    headers: {
+      "content-type": "application/json",
+      Authorization: `Bearer ${Cookies.get("token")}`,
+    },
+    body: JSON.stringify(formData),
+  });
+  return res.json();
+};
 
-    return data;
-  } catch (e) {
-    console.log(e);
-  }
+export const deleteAProduct = async (id) => {
+  const res = await fetch(`/api/admin/delete-product?id=${id}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${Cookies.get("token")}`,
+    },
+  });
+  return res.json();
 };
